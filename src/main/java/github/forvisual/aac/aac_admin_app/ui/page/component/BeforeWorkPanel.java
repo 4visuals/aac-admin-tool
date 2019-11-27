@@ -1,6 +1,7 @@
 package github.forvisual.aac.aac_admin_app.ui.page.component;
 
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -10,6 +11,8 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
@@ -26,6 +29,10 @@ import javax.swing.table.TableColumn;
 import github.forvisual.aac.aac_admin_app.AppContext;
 import github.forvisual.aac.aac_admin_app.Util;
 import github.forvisual.aac.aac_admin_app.WorkImage;
+import github.forvisual.aac.aac_admin_app.ui.page.BulkImageDialog;
+
+import javax.swing.JButton;
+import java.awt.FlowLayout;
 /**
  * 작업해야할 사진들 나오는 화면
  * 
@@ -93,9 +100,38 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 			}
 		});
 		scrollPane.setViewportView(table);
+		
+		JPanel panel = new JPanel();
+		FlowLayout flowLayout = (FlowLayout) panel.getLayout();
+		flowLayout.setAlignment(FlowLayout.LEFT);
+		add(panel, BorderLayout.SOUTH);
+		
+		JButton btnTrash = new JButton("TRASH");
+		btnTrash.addActionListener(e->openDialog("TRASH"));
+		panel.add(btnTrash);
+		
+		JButton btnReuse = new JButton("REUSE");
+		btnReuse.addActionListener(e->openDialog("REUSE"));
+		panel.add(btnReuse);
 
 	}
 	
+	private void openDialog(String mode) {
+		
+		BulkImageDialog d = new BulkImageDialog();
+		d.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				tableModel.reload();
+			}
+		});
+		d.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		d.setMode(mode);
+		d.setModal(true);
+		d.setVisible(true);
+		
+	}
+
 	protected void notifyToListener(WorkImage img) {
 		if (listener != null) {
 			listener.workImageSelected(img);
@@ -114,6 +150,11 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 			images = AppContext.getInstance().getBeforeImages();
 		}
 		
+		public void reload() {
+			images = AppContext.getInstance().getBeforeImages();
+			fireTableDataChanged();
+		}
+
 		public WorkImage getItem(int rowIndex) {
 			return this.images.get(rowIndex);
 		}
@@ -200,5 +241,15 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 			// table.clearSelection();
 			table.getSelectionModel().setSelectionInterval(currentIndex, currentIndex);
 		}
+	}
+	
+	@Override
+	public void moveToReuse(WorkImage image) {
+		int currentIndex = table.getSelectionModel().getMaxSelectionIndex();
+		tableModel.removeItemAt(currentIndex);
+	}
+	@Override
+	public void moveToTrashCan(WorkImage image) {
+		;
 	}
 }

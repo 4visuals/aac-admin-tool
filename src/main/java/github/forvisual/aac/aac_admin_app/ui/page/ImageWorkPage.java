@@ -3,11 +3,15 @@ package github.forvisual.aac.aac_admin_app.ui.page;
 import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JSplitPane;
+import javax.swing.table.AbstractTableModel;
 
+import github.forvisual.aac.aac_admin_app.AppContext;
+import github.forvisual.aac.aac_admin_app.WorkImage;
 import github.forvisual.aac.aac_admin_app.ui.page.component.BeforeWorkPanel;
 import github.forvisual.aac.aac_admin_app.ui.page.component.WorkFormPanel;
 
 import java.awt.BorderLayout;
+import java.util.List;
 
 public class ImageWorkPage extends JPanel {
 
@@ -19,7 +23,6 @@ public class ImageWorkPage extends JPanel {
 		
 		JSplitPane splitPane = new JSplitPane();
 		add(splitPane);
-		splitPane.setDividerLocation(0.5);
 		
 		BeforeWorkPanel beforeWorkPanel = new BeforeWorkPanel();
 		WorkFormPanel formPanel = new WorkFormPanel();
@@ -29,6 +32,57 @@ public class ImageWorkPage extends JPanel {
 		splitPane.setLeftComponent(beforeWorkPanel);
 		splitPane.setRightComponent(formPanel);
 
+		splitPane.setDividerLocation(400);
+	}
+	
+	
+	class DepolyImageModel extends AbstractTableModel {
+
+		private List<WorkImage> images;
+
+		public DepolyImageModel() {
+			images = AppContext.getInstance().getDeployableImages();
+		}
+		
+		public WorkImage getItem(int rowIndex) {
+			return this.images.get(rowIndex);
+		}
+
+		@Override
+		public int getRowCount() {
+			return images.size();
+		}
+
+		@Override
+		public int getColumnCount() {
+			/**
+			 * img  | origin | filename | size
+			 */
+			return 4;
+		}
+
+		@Override
+		public Object getValueAt(int rowIndex, int columnIndex) {
+			WorkImage img = images.get(rowIndex);
+			if (columnIndex == 0) {
+				return img.getImage();
+			} else if (columnIndex == 1) {
+				return img.getOrigin();
+			} else if (columnIndex == 2) {
+				return img.getImageFile().getName();
+			} else if (columnIndex == 3) {
+				return img.getImageFile().length();
+			} else {
+				throw new RuntimeException("out of range:  index: " + columnIndex);
+			}	
+		}
+
+		public void removeItemAt(int currentIndex) {
+			images.remove(currentIndex);
+			// super.fireTableDataChanged();
+			fireTableRowsDeleted(currentIndex, currentIndex);
+		}
+		
 	}
 
 }

@@ -117,6 +117,9 @@ public class Util {
 
 	public static void copy(File src, File dst) {
 		try {
+			File parentDir = dst.getParentFile();
+			parentDir.mkdirs();
+			
 			Files.copy(src.toPath(), dst.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			throw new RuntimeException("fail to copy file " + src.getAbsolutePath() + " => " + dst.getAbsolutePath());
@@ -195,6 +198,11 @@ public class Util {
 	public static void alert(Component opener, String title, String message) {
 		Component window = SwingUtilities.getWindowAncestor(opener);
 		JOptionPane.showMessageDialog(window, message, title, JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	public static boolean mkdir(String dirpath) {
+		File dir = new File(dirpath);
+		return dir.mkdirs();
 	}
 
 }

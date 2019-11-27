@@ -8,6 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import github.forvisual.aac.aac_admin_app.ui.page.DeployPage;
 import github.forvisual.aac.aac_admin_app.ui.page.ImageWorkPage;
 import github.forvisual.aac.aac_admin_app.ui.page.SearchPage;
 
@@ -57,7 +58,7 @@ public class MainFrame extends JFrame {
 	 */
 	public MainFrame() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 766, 469);
+		setBounds(100, 100, 900, 700);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
@@ -71,6 +72,8 @@ public class MainFrame extends JFrame {
 		tabbedPane.addTab("ImageWork", new ImageWorkPage());
 		
 		tabbedPane.addTab("Search", new SearchPage());
+		
+		tabbedPane.addTab("Deploy", new DeployPage());
 		
 	}
 

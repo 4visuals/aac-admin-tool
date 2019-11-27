@@ -84,6 +84,16 @@ public class WorkImage {
 		return name;
 	}
 
+	public BufferedImage asImage() {
+		File f = getImageFile();
+		try {
+			return ImageIO.read(f);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	
 	
 	

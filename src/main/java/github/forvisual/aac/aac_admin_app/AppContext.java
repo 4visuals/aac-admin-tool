@@ -371,4 +371,25 @@ public class AppContext {
 			close(con, stmt, rs);
 		}
 	}
+	public List<WorkImage> getDeployableImages() {
+		
+		String query = "select * from pics where ";
+		return null;
+	}
+	public void moveToTrash(WorkImage img) {
+		moveTo(img, "subtask/trashcan/");
+	}
+	public void moveToReuse(WorkImage img) {
+		moveTo(img, "subtask/reuse/");
+	}
+	private void moveTo(WorkImage img, String path) {
+		File src = img.getImageFile();
+		String origin = img.getOrigin();
+		
+		String subPath = path + origin + "/";
+		Util.mkdir(subPath);
+		File dest = new File(subPath + src.getName());
+		Util.copy(src,dest);
+		src.delete();
+	}
 }

@@ -16,6 +16,7 @@ import github.forvisual.aac.aac_admin_app.model.Category;
 import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -128,16 +129,52 @@ public class WorkFormPanel extends JPanel implements WorkImageListener {
 		gbc_categoryBox.gridx = 1;
 		gbc_categoryBox.gridy = 2;
 		add(categoryBox, gbc_categoryBox);
+		{
+			JPanel btnPanel = new JPanel();
+			
+			btnProcess = new JButton("PROCESS");
+			btnProcess.setFont(font);
+			
+			btnPanel.add(btnProcess);
+			
+			JButton btnReuse = new JButton("이미지 작업");
+			btnReuse.addActionListener(e -> processGotoReuseDir());
+			btnPanel.add(btnReuse);
+			
+			JButton btnDel = new JButton("삭제");
+			btnDel.addActionListener(e -> processGotoTrash());
+			btnPanel.add(btnDel);
+			
+			
+			GridBagConstraints gbc_btnProcess = new GridBagConstraints();
+			gbc_btnProcess.gridx = 1;
+			gbc_btnProcess.gridy = 3;
+			add(btnPanel, gbc_btnProcess);
+			
+		}
 		
-		btnProcess = new JButton("PROCESS");
-		btnProcess.setFont(font);
-		GridBagConstraints gbc_btnProcess = new GridBagConstraints();
-		gbc_btnProcess.gridx = 1;
-		gbc_btnProcess.gridy = 3;
-		add(btnProcess, gbc_btnProcess);
 
 	}
-	
+	/**
+	 * 휴지통으로 ..
+	 */
+	private void processGotoTrash() {
+		AppContext.getInstance().moveToTrash(this.img);
+		if (listener != null) {
+			listener.submitted(img, true);
+		}
+	}
+	/**
+	 * 이미지 추가 작업용 폴더로 이동시킴
+	 */
+	private void processGotoReuseDir() {
+		
+		AppContext.getInstance().moveToReuse(this.img);
+		if (listener != null) {
+			listener.submitted(img, true);
+		}
+	}
+
 	public void setFormListener (FormResultListener l) {
 		listener = l;
 	}
@@ -174,6 +211,7 @@ public class WorkFormPanel extends JPanel implements WorkImageListener {
 		descField.selectAll();
 		
 	}
+	
 	@Override
 	public void workImageSelected(WorkImage image) {
 		updateForm(image);
