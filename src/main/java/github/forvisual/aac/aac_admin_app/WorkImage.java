@@ -20,14 +20,25 @@ public class WorkImage {
 	
 	private File imageFile;
 	
-	private List<String> descriptions;
+	private List<String> descriptions; // [333, "감자"]
 	
 	private int cateSeq;
+
+	private int seq;
+	
 
 	public WorkImage(String origin, File pictureImage) {
 		this.origin = origin;
 		this.imageFile = pictureImage;
 	}
+	
+	public WorkImage(int seq, String origin, File path, int cateSeq) {
+		this.seq = seq;
+		this.origin = origin;
+		this.imageFile = path;
+		this.cateSeq = cateSeq;
+	}
+	
 
 	@Override
 	public String toString() {
@@ -92,6 +103,10 @@ public class WorkImage {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public int getSeq() {
+		return seq;
 	}
 
 	

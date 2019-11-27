@@ -392,4 +392,113 @@ public class AppContext {
 		Util.copy(src,dest);
 		src.delete();
 	}
+	/**
+	 * 현재 작업중인 사진들(배포는 안된 사진들)
+	 * 
+	 * @return
+	 */
+	public List<WorkImage> getWorkingImages() {
+		String query = "select * from pics where db_version = 0";
+		Connection con = getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		
+		List<WorkImage> list = new ArrayList<WorkImage>();
+		try {
+			stmt = con.prepareStatement(query);
+			rs = stmt.executeQuery();
+			while (rs.next()) {
+				int seq = rs.getInt("seq");
+				String origin = rs.getString("origin");
+				String fname = rs.getString("pic_name");
+				int cateSeq = rs.getInt("cate_ref");
+				
+				File filePath = new File("after/"+ origin + "/" + fname);
+				
+				WorkImage wi = new WorkImage(seq, origin, filePath, cateSeq);
+				wi.setDescription(getDesc(con, seq));
+				list.add(wi);
+			}
+			return list;
+		} catch (SQLException e) {
+			rollback(con);
+			throw new RuntimeException(e);
+		} finally {
+			close(con, stmt, rs);
+		}
+	}
+	/**
+	 * 이미지의 설명들
+	 * @param con
+	 * @param picSeq
+	 * @return
+	 */
+	private List<String> getDesc(Connection con, int picSeq) {
+		String query = "select w.* from word_pic wp "
+				+ " join words w on wp.word = w.seq "
+				+ " where wp.pic = ?";
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		
+		List<String> list = new ArrayList<>();
+		try {
+			stmt = con.prepareStatement(query);
+			stmt.setInt(1, picSeq);
+			rs = stmt.executeQuery();
+			while (rs.next()) {
+				String wordName = rs.getString("word_name");
+				list.add(wordName);
+			}
+			return list;
+		} catch (SQLException e) {
+			rollback(con);
+			throw new RuntimeException(e);
+		} finally {
+			close(null, stmt, rs);
+		}
+	}
+	/**
+	 * TODO 특정 사진과 그에 연결된 단어 맵핑을 지움
+	 * @param con
+	 * @param wordSeq
+	 * @param word
+	 */
+	void deleteWordMapping(Connection con, int wordSeq, String word) {
+		String query = "delete from word_pic where seq = ?";
+		
+		PreparedStatement stmt = null;
+		try {
+			stmt = con.prepareStatement(query);
+			stmt.setInt(1, wordSeq);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		} finally {
+			ctx.close(null, stmt, null);
+		}
+	}
+	
+	public void replaceWords(WorkImage img, List<String> desc) {
+		List<String> words = desc;
+		Connection con =getConnection();
+		for (String w : words) {
+			deleteWordMapping(con, img.getSeq(), w);
+		}
+		/*
+		 * 주어진 단어가 있으면 SEQ반환, 없으면 집어넣고 SEQ반환
+		try {
+			for(String each : words) {
+				int wordSeq = insertWord(con, each);
+				addMappings(con, picSeq, wordSeq);
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		
+		*/
+		img.setDescription(desc);
+	}
+	public void updateDescription(WorkImage img) {
+		// TODO 현재 사진에 연결된 단어를 다 지움. 그리고나서 새로 등록함
+	}
 }

@@ -114,6 +114,19 @@ public class Util {
 		JOptionPane.showMessageDialog(window, message, title, JOptionPane.ERROR_MESSAGE);
 		
 	}
+	
+	public static List<String> split(String wordString, String delim) {
+		String [] tokens = wordString.split(delim);
+		List<String> words = new ArrayList<String>();
+		for (String tk : tokens) {
+			tk = tk.trim();
+			if (tk.length() == 0) {
+				continue;
+			}
+			words.add(tk);
+		}
+		return words;
+	}
 
 	public static void copy(File src, File dst) {
 		try {
