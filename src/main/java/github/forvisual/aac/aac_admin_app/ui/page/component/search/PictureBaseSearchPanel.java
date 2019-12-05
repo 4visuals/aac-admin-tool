@@ -163,11 +163,19 @@ public class PictureBaseSearchPanel extends JPanel {
 			} else if (columnIndex == 1) {
 				String text = (String) aValue;
 				List<String> desc = Util.split(text, ",");
-				// AppContext.getInstance().replaceWords(img, desc);
+				AppContext.getInstance().replaceWords(img, desc);
 				img.setDescription(desc);
 				this.fireTableDataChanged();
 			} else if (columnIndex == 2) {
 				// return findCategory(img.getCateSeq());
+				Category cate = (Category) aValue;
+				img.setCateSeq(cate.getNum());
+				AppContext.getInstance().updateCategory(img.getSeq(), cate.getNum());
+				// ctx.cateDao.updateCategory(pic.getPicSeq(), cate.getSeq());
+				
+				// TODO 디비로 업데이트 해야 함
+				// Excel.updateCell(userWordExcel, "main", rowIndex + 1, columnIndex, cate.getSeq());
+				this.fireTableDataChanged();
 			} else {
 				throw new RuntimeException("out of range:  index: " + columnIndex);
 			}	

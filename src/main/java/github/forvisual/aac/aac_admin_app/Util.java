@@ -42,6 +42,7 @@ public class Util {
 	public static List<File> listImages(File origin) {
 		List<File> subDir = new ArrayList<File>();
 		File [] files = origin.listFiles();
+
 		if (files == null) {
 			files = new File[0];
 		}

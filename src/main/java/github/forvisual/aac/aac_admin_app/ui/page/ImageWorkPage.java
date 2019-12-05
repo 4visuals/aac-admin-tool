@@ -32,7 +32,7 @@ public class ImageWorkPage extends JPanel {
 		splitPane.setLeftComponent(beforeWorkPanel);
 		splitPane.setRightComponent(formPanel);
 
-		splitPane.setDividerLocation(400);
+		splitPane.setDividerLocation(500);
 	}
 	
 	

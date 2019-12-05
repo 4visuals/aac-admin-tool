@@ -2,6 +2,7 @@ package github.forvisual.aac.aac_admin_app.ui.page.component;
 
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -41,13 +42,15 @@ import java.awt.FlowLayout;
  */
 public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 	
-	private int rowSize = 100;
+	private int rowSize = 200;
+	private int count = 0; // 7890
 	private JTable table;
 	WorkImageModel tableModel;
 	
 	WorkImageListener listener;
 	
 	Font font = new Font("나눔고딕", Font.BOLD, 20);
+	private JButton countBtn;
 
 	/**
 	 * Create the panel.
@@ -59,7 +62,7 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 		add(scrollPane, BorderLayout.CENTER);
 		
 		DefaultTableColumnModel columnModel = new DefaultTableColumnModel();
-		TableColumn picColumn = new TableColumn(0, 100);
+		TableColumn picColumn = new TableColumn(0, 200);
 		picColumn.setHeaderValue("그림");
 		picColumn.setMinWidth(100);
 		picColumn.setMaxWidth(200);
@@ -113,16 +116,26 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 		JButton btnReuse = new JButton("REUSE");
 		btnReuse.addActionListener(e->openDialog("REUSE"));
 		panel.add(btnReuse);
+		
+		count = table.getRowCount(); 
+		countBtn = new JButton("이미지 개수: " + count + "개");
+		countBtn.addActionListener(e->updateCount());
+		panel.add(countBtn);
 
 	}
 	
+	private void updateCount() {
+		tableModel.reload();
+		countBtn.setText("이미지 개수: " + table.getRowCount() + "개");
+	}
+
 	private void openDialog(String mode) {
 		
 		BulkImageDialog d = new BulkImageDialog();
 		d.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e) {
-				tableModel.reload();
+				updateCount();
 			}
 		});
 		d.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -239,7 +252,12 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 			int currentIndex = table.getSelectionModel().getMaxSelectionIndex();
 			tableModel.removeItemAt(currentIndex);
 			// table.clearSelection();
-			table.getSelectionModel().setSelectionInterval(currentIndex, currentIndex);
+			int cnt = table.getRowCount();
+			if (cnt > 0 ) {
+				table.getSelectionModel().setSelectionInterval(currentIndex, currentIndex);				
+			}
+			countBtn.setText("이미지 개수: " + cnt + "개");
+			
 		}
 	}
 	

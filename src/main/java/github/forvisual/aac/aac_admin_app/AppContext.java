@@ -80,14 +80,17 @@ public class AppContext {
 		File beforeDir = getBeforeDir();
 		List<File> originDirs = Util.listDir(beforeDir);
 		List<WorkImage> imgToDo = new ArrayList<WorkImage>();
+
 	
 		for (File origin : originDirs) {
 			List<File> images = Util.listImages(origin);
+
 			for (File img : images) {
 				WorkImage wi = new WorkImage(origin.getName(), img);
 				imgToDo.add(wi);
 			}
 		}
+		
 		return imgToDo;
 	}
 	/**
@@ -427,6 +430,30 @@ public class AppContext {
 			close(con, stmt, rs);
 		}
 	}
+	
+	public List<String> getAllDescs() {
+		String query = "select * from words where db_version = 0";
+		Connection con = getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		
+		List<String> list = new ArrayList<String>();
+		try {
+			stmt = con.prepareStatement(query);
+			rs = stmt.executeQuery();
+			while (rs.next()) {
+				String desc = rs.getString("word_name");
+				list.add(desc);
+			}
+			return list;
+		} catch (SQLException e) {
+			rollback(con);
+			throw new RuntimeException(e);
+		} finally {
+			close(con, stmt, rs);
+		}
+	}
+	
 	/**
 	 * 이미지의 설명들
 	 * @param con
@@ -463,13 +490,13 @@ public class AppContext {
 	 * @param wordSeq
 	 * @param word
 	 */
-	void deleteWordMapping(Connection con, int wordSeq, String word) {
-		String query = "delete from word_pic where seq = ?";
+	void deleteWordMapping(Connection con, int picSeq) {
+		String query = "delete from word_pic where pic = ?";
 		
 		PreparedStatement stmt = null;
 		try {
 			stmt = con.prepareStatement(query);
-			stmt.setInt(1, wordSeq);
+			stmt.setInt(1, picSeq);
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -481,24 +508,53 @@ public class AppContext {
 	public void replaceWords(WorkImage img, List<String> desc) {
 		List<String> words = desc;
 		Connection con =getConnection();
-		for (String w : words) {
-			deleteWordMapping(con, img.getSeq(), w);
-		}
+		deleteWordMapping(con, img.getSeq());
+
 		/*
-		 * 주어진 단어가 있으면 SEQ반환, 없으면 집어넣고 SEQ반환
+		 * 주어진 단어가 있으면 SEQ반환, 없으면 집어넣고 SEQ반환*/
 		try {
+			int picSeq = img.getSeq();
 			for(String each : words) {
-				int wordSeq = insertWord(con, each);
-				addMappings(con, picSeq, wordSeq);
+				Word word = insertWord(con, each);
+				addMappings(con, picSeq, word.seq);
 			}
+			con.commit();
 		} catch (SQLException e) {
+			rollback(con);
 			throw new RuntimeException(e);
+		} finally {
+			close(con, null, null);
 		}
 		
-		*/
 		img.setDescription(desc);
+	}
+	private void addMappings(Connection con, int picSeq, int wordSeq) throws SQLException {
+		String query = "INSERT INTO word_pic(word, pic) VALUES(?, ?)"; /// 
+		PreparedStatement stmt = con.prepareStatement(query);
+		stmt.setInt(1, wordSeq);
+		stmt.setInt(2, picSeq);
+		stmt.executeUpdate();
+		stmt.close();
 	}
 	public void updateDescription(WorkImage img) {
 		// TODO 현재 사진에 연결된 단어를 다 지움. 그리고나서 새로 등록함
+	}
+	public void updateCategory(int picSeq, int cateSeq) {
+		String query = "update pics set cate_ref = ? where seq = ?";
+		Connection con = getConnection();
+		PreparedStatement stmt = null;
+		try {
+			stmt = con.prepareStatement(query);
+			stmt.setInt(1, cateSeq);
+			stmt.setInt(2, picSeq);
+			stmt.executeUpdate();
+			con.commit();
+		} catch (SQLException e) {
+			rollback(con);
+			throw new RuntimeException(e);
+		} finally {
+			ctx.close(con, stmt, null);
+		}
+		
 	}
 }

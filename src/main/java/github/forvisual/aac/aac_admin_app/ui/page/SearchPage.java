@@ -6,6 +6,7 @@ import java.awt.BorderLayout;
 import javax.swing.JTabbedPane;
 
 import github.forvisual.aac.aac_admin_app.ui.page.component.search.PictureBaseSearchPanel;
+import github.forvisual.aac.aac_admin_app.ui.page.component.search.WordBaseSearchPanel;
 
 public class SearchPage extends JPanel {
 
@@ -20,6 +21,7 @@ public class SearchPage extends JPanel {
 		
 		tabbedPane.addTab("사진으로", new PictureBaseSearchPanel());
 		
-	}
+		tabbedPane.addTab("어휘로",  new WordBaseSearchPanel());
+		}
 
 }
