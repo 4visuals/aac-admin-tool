@@ -125,8 +125,8 @@ public class AppContext {
 		Connection con = getConnection();
 		try {
 			int picturePK = insertPicture(con, genFilename, image.getCateSeq(), image.getOrigin());
-			for(String word : image.getDescriptions()) {
-				Word w = insertWord(con, word);
+			for(Word w: image.getDescriptions()) {
+				// Word w = insertWord(con, word);
 				mappingWordPic(con, picturePK, w.seq);
 			}
 			
@@ -199,7 +199,7 @@ public class AppContext {
 			rs = stmt.executeQuery();
 			
 			if (rs.next()) {
-				return new Word(rs.getInt("seq"), rs.getString("word_name"));
+				return new Word(rs.getInt("seq"), rs.getString("word_name"), rs.getString("db_version"));
 			} else {
 				return null;
 			}
@@ -460,21 +460,22 @@ public class AppContext {
 	 * @param picSeq
 	 * @return
 	 */
-	private List<String> getDesc(Connection con, int picSeq) {
+	private List<Word> getDesc(Connection con, int picSeq) {
 		String query = "select w.* from word_pic wp "
 				+ " join words w on wp.word = w.seq "
 				+ " where wp.pic = ?";
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		
-		List<String> list = new ArrayList<>();
+		List<Word> list = new ArrayList<>();
 		try {
 			stmt = con.prepareStatement(query);
 			stmt.setInt(1, picSeq);
 			rs = stmt.executeQuery();
 			while (rs.next()) {
-				String wordName = rs.getString("word_name");
-				list.add(wordName);
+				Word w = new Word(rs.getInt("seq"), rs.getString("word_name"), rs.getString("db_version"));
+				// String wordName = rs.getString("word_name");
+				list.add(w);
 			}
 			return list;
 		} catch (SQLException e) {
@@ -485,39 +486,53 @@ public class AppContext {
 		}
 	}
 	/**
-	 * TODO 특정 사진과 그에 연결된 단어 맵핑을 지움
+	 * TODO 특정 사진에 연결된 신규 단어 맵핑을 모두 지움
 	 * @param con
+	 * @param words 
 	 * @param wordSeq
 	 * @param word
 	 */
-	void deleteWordMapping(Connection con, int picSeq) {
-		String query = "delete from word_pic where pic = ?";
-		
+	void deleteWorkingWordMapping(Connection con, WorkImage pic) {
+		List<Word> workingWords = pic.getDescriptions(true);
+		String query = "delete from word_pic where pic = ? and word = ?";
 		PreparedStatement stmt = null;
 		try {
-			stmt = con.prepareStatement(query);
-			stmt.setInt(1, picSeq);
-			stmt.executeUpdate();
+			for (Word w : workingWords) {
+				stmt = con.prepareStatement(query);
+				stmt.setInt(1, pic.getSeq());
+				stmt.setInt(2, w.seq);
+				stmt.executeUpdate();
+				stmt.clearParameters();
+			}
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		} finally {
 			ctx.close(null, stmt, null);
 		}
+
 	}
 	
 	public void replaceWords(WorkImage img, List<String> desc) {
-		List<String> words = desc;
+		// List<String> words = desc;
 		Connection con =getConnection();
-		deleteWordMapping(con, img.getSeq());
+		// img.getDescriptions(true);
+		deleteWorkingWordMapping(con, img);
 
 		/*
 		 * 주어진 단어가 있으면 SEQ반환, 없으면 집어넣고 SEQ반환*/
 		try {
 			int picSeq = img.getSeq();
-			for(String each : words) {
-				Word word = insertWord(con, each);
+			List<Word> words = new ArrayList<Word>();
+			for(String each : desc) {
+				Word word = findWord(con, each);
+				if (word == null) {
+					word = insertWord(con, each);
+				}
 				addMappings(con, picSeq, word.seq);
+				words.add(word);
 			}
+			words.addAll(img.getDescriptions(false));
+			img.setDescription(words);
 			con.commit();
 		} catch (SQLException e) {
 			rollback(con);
@@ -526,7 +541,7 @@ public class AppContext {
 			close(con, null, null);
 		}
 		
-		img.setDescription(desc);
+		
 	}
 	private void addMappings(Connection con, int picSeq, int wordSeq) throws SQLException {
 		String query = "INSERT INTO word_pic(word, pic) VALUES(?, ?)"; /// 
@@ -556,5 +571,26 @@ public class AppContext {
 			ctx.close(con, stmt, null);
 		}
 		
+	}
+	public List<Word> prepareWords(List<String> descs) {
+		
+		List<Word> list = new ArrayList<>();
+		Connection con = getConnection();
+		try {
+			for (String wname : descs) {
+				Word w = findWord(con, wname);
+				if (w == null) {
+					w = insertWord(con, wname);
+				}
+				list.add(w);
+			}
+			con.commit();
+			return list;
+		}  catch (SQLException e) {
+			rollback(con);
+			throw new RuntimeException(e);
+		} finally {
+			close(con, null, null);
+		}
 	}
 }

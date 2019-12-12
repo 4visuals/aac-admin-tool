@@ -4,9 +4,11 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -15,6 +17,7 @@ import github.forvisual.aac.aac_admin_app.AppContext;
 import github.forvisual.aac.aac_admin_app.Util;
 import github.forvisual.aac.aac_admin_app.WorkImage;
 import github.forvisual.aac.aac_admin_app.model.Category;
+import github.forvisual.aac.aac_admin_app.model.Word;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -41,6 +44,8 @@ public class PictureBaseSearchPanel extends JPanel {
 	
 	private JTable table;
 	private WorkImageModel tableModel;
+	
+	private WordCellRenderer wordCellRender = new WordCellRenderer();
 
 
 	/**
@@ -70,14 +75,24 @@ public class PictureBaseSearchPanel extends JPanel {
 			picColumn.setCellRenderer(new PictureRenderer());
 			cmodel.addColumn(picColumn);
 			
-			TableColumn wordColumn = new TableColumn(1, 600);
-			wordColumn.setHeaderValue("어휘");
-			WordValueEditor handler = new WordValueEditor();
-			wordColumn.setCellEditor(handler);
+			TableColumn pathColumn = new TableColumn(1, 100);
+			pathColumn.setHeaderValue("파일이름");
 //			wordColumn.setCellRenderer(handler);
-			cmodel.addColumn(wordColumn);
+			cmodel.addColumn(pathColumn);
 			
-			TableColumn categoryColumn = new TableColumn(2, 100);
+			TableColumn wordColumn1 = new TableColumn(2, 300);
+			wordColumn1.setHeaderValue("배포된 어휘");
+			wordColumn1.setCellRenderer(wordCellRender);
+			cmodel.addColumn(wordColumn1);
+			
+			TableColumn wordColumn2 = new TableColumn(3, 400);
+			wordColumn2.setHeaderValue("신규 어휘");
+			WordValueEditor handler = new WordValueEditor();
+			wordColumn2.setCellEditor(handler);
+			// wordColumn2.setCellRenderer(wordCellRender);
+			cmodel.addColumn(wordColumn2);
+			
+			TableColumn categoryColumn = new TableColumn(4, 100);
 			categoryColumn.setHeaderValue("카테고리");
 			categoryColumn.setCellRenderer(new CategoryCellRenderer());
 			categoryColumn.setCellEditor(new DefaultCellEditor(categoryCbBox));
@@ -93,6 +108,10 @@ public class PictureBaseSearchPanel extends JPanel {
 		}
 	}
 	
+	public void reloadPage() {
+		tableModel.reload();
+	}
+	
 	private class WorkImageModel extends AbstractTableModel {
 
 		private List<WorkImage> images;
@@ -103,11 +122,11 @@ public class PictureBaseSearchPanel extends JPanel {
 		
 		@Override
 		public boolean isCellEditable(int rowIndex, int columnIndex) {
-			return true;
+			return columnIndex == 1 || columnIndex == 2 ? false : true;
 		}
 		
 		public void reload() {
-			images = AppContext.getInstance().getBeforeImages();
+			images = AppContext.getInstance().getWorkingImages();
 			fireTableDataChanged();
 		}
 
@@ -123,9 +142,9 @@ public class PictureBaseSearchPanel extends JPanel {
 		@Override
 		public int getColumnCount() {
 			/**
-			 * img  | desc | category
+			 * img | img filename  |desc1 | desc2 | category
 			 */
-			return 3;
+			return 5;
 		}
 		
 		@Override
@@ -133,8 +152,12 @@ public class PictureBaseSearchPanel extends JPanel {
 			if ( columnIndex == 0 ) {
 				return BufferedImage.class;
 			} else if ( columnIndex == 1) {
+				return String.class;
+			} else if ( columnIndex == 2) {
 				return List.class;
-			} else if (columnIndex == 2) {
+			} else if ( columnIndex == 3) {
+				return String.class;
+			} else if (columnIndex == 4) {
 				return Category.class;
 			}
 			else {
@@ -148,8 +171,23 @@ public class PictureBaseSearchPanel extends JPanel {
 			if (columnIndex == 0) {
 				return img.getImage();
 			} else if (columnIndex == 1) {
-				return String.join(",", img.getDescriptions().toArray(new String[img.getDescriptions().size()]));
+				return img.getFileName(false);
 			} else if (columnIndex == 2) {
+				List<Word> words = img.getDescriptions(false);
+				return words;
+			} else if (columnIndex == 3) {
+				// return String.join(",", img.getDescriptions().toArray(new String[img.getDescriptions().size()]));
+				List<Word> words = img.getDescriptions(true);
+				StringBuilder sb = new StringBuilder();
+				for (Word word : words) {
+					sb.append(word.wordName);
+					sb.append(",");
+				}
+				if (sb.length()>0) {
+					sb.delete(sb.length()-1, sb.length());
+				}
+				return sb.toString();
+			} else if (columnIndex == 4) {
 				return findCategory(img.getCateSeq());
 			} else {
 				throw new RuntimeException("out of range:  index: " + columnIndex);
@@ -161,12 +199,19 @@ public class PictureBaseSearchPanel extends JPanel {
 			if (columnIndex == 0) {
 				;
 			} else if (columnIndex == 1) {
+				throw new RuntimeException("파일 이름 변경 불가");
+			} else if (columnIndex == 2) {
+				// 배포된 기존 어휘들
+				throw new RuntimeException("기존에 등록된 어휘들입니다.");
+				
+			} else if (columnIndex == 3) {
+				// 신규 어휘들
 				String text = (String) aValue;
 				List<String> desc = Util.split(text, ",");
 				AppContext.getInstance().replaceWords(img, desc);
-				img.setDescription(desc);
+				// img.setDescription(desc);
 				this.fireTableDataChanged();
-			} else if (columnIndex == 2) {
+			} else if (columnIndex == 4) {
 				// return findCategory(img.getCateSeq());
 				Category cate = (Category) aValue;
 				img.setCateSeq(cate.getNum());
@@ -228,21 +273,21 @@ public class PictureBaseSearchPanel extends JPanel {
 	class PictureRenderer extends JComponent implements TableCellRenderer {
 		int gap = 4;
 		BufferedImage img ;
-		String fname;
+//		String fname;
 		private Color bgColor = Color.WHITE;
-		private Color picNameBgColor ;
+//		private Color picNameBgColor ;
 		public PictureRenderer() {
 			setPreferredSize(new Dimension(100, 100));
 			setSize(getPreferredSize());
-			picNameBgColor = new Color(255, 255, 255, 200);
+//			picNameBgColor = new Color(255, 255, 255, 200);
 		}
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 				int row, int column) {
 			this.img = ((BufferedImage) value);
-			// fname = pic.getPicName(); // "userpic/x3333.png"
+//			fname = img.getPicName(); // "userpic/x3333.png"
 //			img = ctx.pictureDao.readPicture(pic);
-			bgColor = isSelected ? table.getSelectionBackground() : Color.WHITE;
+//			bgColor = isSelected ? table.getSelectionBackground() : Color.WHITE;
 			return this;
 		}
 		
@@ -265,13 +310,35 @@ public class PictureBaseSearchPanel extends JPanel {
 			FontMetrics fm= g.getFontMetrics();
 			int w = W;
 			int h = fm.getHeight() + 3;
-			g.setColor(picNameBgColor);
+//			g.setColor(picNameBgColor);
 			g.fillRect(0, H - h, w, h);
 			
 			g.setColor(Color.BLACK);
-			g.drawString(fname, 2, H - 3);
+//			g.drawString(fname, 2, H - 3);
 			
 		}
+	}
+	
+	class WordCellRenderer extends DefaultTableCellRenderer {
+		
+		@Override
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+				int row, int column) {
+
+			List<Word> words = (List<Word>) value;
+			JLabel lbl = this;
+			StringBuilder sb = new StringBuilder();
+			for (Word word : words) {
+				sb.append(word.wordName);
+				sb.append(",");
+			}
+			if (sb.length() > 0 ) {
+				sb.delete(sb.length()-1, sb.length());				
+			}
+			lbl.setText(sb.toString());
+			return lbl;
+		}
+		
 	}
 	
 	class CategoryCellRenderer extends JComponent implements TableCellRenderer {

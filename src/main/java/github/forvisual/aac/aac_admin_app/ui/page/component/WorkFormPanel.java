@@ -12,6 +12,7 @@ import github.forvisual.aac.aac_admin_app.AppContext;
 import github.forvisual.aac.aac_admin_app.Util;
 import github.forvisual.aac.aac_admin_app.WorkImage;
 import github.forvisual.aac.aac_admin_app.model.Category;
+import github.forvisual.aac.aac_admin_app.model.Word;
 
 import java.awt.Insets;
 import java.awt.event.KeyAdapter;
@@ -226,7 +227,8 @@ public class WorkFormPanel extends JPanel implements WorkImageListener {
 		}
 		
 		boolean success = false;
-		img.setDescription(descs);
+		List<Word> words = AppContext.getInstance().prepareWords(descs);
+		img.setDescription(words);
 		img.setCateSeq(curCate.getNum());
 		try {
 			if (AppContext.getInstance().existingPicture(img)) {

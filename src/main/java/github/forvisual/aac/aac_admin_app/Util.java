@@ -19,9 +19,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+
+import github.forvisual.aac.aac_admin_app.model.Word;
 
 public class Util {
 	public enum AlignmentX { LEFT, CENTER, RIGHT};

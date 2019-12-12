@@ -50,7 +50,7 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 	WorkImageListener listener;
 	
 	Font font = new Font("나눔고딕", Font.BOLD, 20);
-	private JButton countBtn;
+	private JLabel countLbl;
 
 	/**
 	 * Create the panel.
@@ -118,15 +118,15 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 		panel.add(btnReuse);
 		
 		count = table.getRowCount(); 
-		countBtn = new JButton("이미지 개수: " + count + "개");
-		countBtn.addActionListener(e->updateCount());
-		panel.add(countBtn);
+		countLbl = new JLabel("이미지 개수: " + count + "개");
+//		countBtn.addActionListener(e->updateCount());
+		panel.add(countLbl);
 
 	}
 	
 	private void updateCount() {
 		tableModel.reload();
-		countBtn.setText("이미지 개수: " + table.getRowCount() + "개");
+		countLbl.setText("이미지 개수: " + table.getRowCount() + "개");
 	}
 
 	private void openDialog(String mode) {
@@ -256,7 +256,7 @@ public class BeforeWorkPanel extends JPanel  implements FormResultListener {
 			if (cnt > 0 ) {
 				table.getSelectionModel().setSelectionInterval(currentIndex, currentIndex);				
 			}
-			countBtn.setText("이미지 개수: " + cnt + "개");
+			countLbl.setText("이미지 개수: " + cnt + "개");
 			
 		}
 	}

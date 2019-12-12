@@ -14,18 +14,21 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import github.forvisual.aac.aac_admin_app.model.Word;
+
 public class WorkImage {
 
 	private String origin;
 	
 	private File imageFile;
 	
-	private List<String> descriptions; // [333, "감자"]
+	private List<Word> descriptions; // [333, "감자"]
 	
 	private int cateSeq;
 
 	private int seq;
-	
+	private List<Word> desc0; // 기존에 배포된 단어
+	private List<Word> desc1; // 신규 단어
 
 	public WorkImage(String origin, File pictureImage) {
 		this.origin = origin;
@@ -61,8 +64,9 @@ public class WorkImage {
 		return imageFile;
 	}
 
-	public void setDescription(List<String> descs) {
+	public void setDescription(List<Word> descs) {
 		this.descriptions = new ArrayList<>(descs);
+		this.desc0 = this.desc1 = null;
 	}
 	
 	public int getCateSeq() {
@@ -82,8 +86,22 @@ public class WorkImage {
 		return fname.substring(pos+1);
 	}
 
-	public List<String> getDescriptions() {
+	public List<Word> getDescriptions() {
 		return this.descriptions;
+	}
+	public List<Word> getDescriptions(boolean workingImage) {
+		if (this.desc0 == null || this.desc1 == null) {
+			this.desc0 = new ArrayList<Word>(this.descriptions);
+			this.desc1 = new ArrayList<Word>();
+			for (Word word : descriptions) {
+				if (word.isWorkingWord()) {
+					desc1.add(word);
+				}
+			}
+			
+			this.desc0.removeAll(desc1);
+		}
+		return workingImage ? this.desc1: this.desc0; // this.descriptions;
 	}
 
 	public String getFileName(boolean excludeExtension) {
@@ -108,6 +126,7 @@ public class WorkImage {
 	public int getSeq() {
 		return seq;
 	}
+
 
 	
 	

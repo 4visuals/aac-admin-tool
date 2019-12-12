@@ -1,16 +1,20 @@
 package github.forvisual.aac.aac_admin_app;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Font;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import github.forvisual.aac.aac_admin_app.ui.page.DeployPage;
 import github.forvisual.aac.aac_admin_app.ui.page.ImageWorkPage;
 import github.forvisual.aac.aac_admin_app.ui.page.SearchPage;
+import github.forvisual.aac.aac_admin_app.ui.page.component.search.PictureBaseSearchPanel;
 
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
@@ -74,6 +78,17 @@ public class MainFrame extends JFrame {
 		tabbedPane.addTab("Search", new SearchPage());
 		
 		tabbedPane.addTab("Deploy", new DeployPage());
+		
+		tabbedPane.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				Component comp = tabbedPane.getSelectedComponent();
+				if (comp.getClass() == SearchPage.class) {
+					((SearchPage)comp).reload();
+				}
+			}
+		});
 		
 	}
 
